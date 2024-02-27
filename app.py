@@ -32,22 +32,25 @@ def main():
     if st.button("Submit"):
         # Display a spinner while processing
         with st.spinner(text="Loading, please wait..."):
-            # Simulate processing time (replace this with actual API call)
-            time.sleep(20)
+            # Package the form data into a dictionary
+            form_data = {
+                "name": name,
+                "email": email,
+                "member_organization": member_org,
+                "year": selected_year,
+                "bill_type": bill_type,
+                "bill_number": bill_number,
+                "support": support
+            }
 
-        # After 10 seconds, update message to "Complete"
+            # Call the FastAPI API
+            response = call_api(form_data)
+
+        # After API call completes, update message to "Complete"
         st.success("Complete")
 
         # Package the form data into a dictionary
-        form_data = {
-            "name": name,
-            "email": email,
-            "member_organization": member_org,
-            "year": selected_year,
-            "bill_type": bill_type,
-            "bill_number": bill_number,
-            "support": support
-        }
+
 
         # Call the FastAPI API (commented out for testing)
         #response = call_api(form_data)
@@ -64,7 +67,7 @@ def call_api(data):
         # Extract year and bill_number from data
         year = data.get("year")
         bill_number = data.get("bill_number")
-        
+
         # Check if year and bill_number are present
         if not year or not bill_number:
             return {"error": "Year and bill_number are required."}
@@ -74,7 +77,7 @@ def call_api(data):
 
         # Make POST request to API with query parameters
         response = requests.post(api_url, params=params, json=data)
-        
+
         # Print response content for debugging
         print(response.content)
 
