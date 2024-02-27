@@ -2,8 +2,8 @@ import streamlit as st
 import requests
 
 def main():
-    st.set_page_config(page_title='Member Portal Bill Voting', layout='wide', theme={"base": "light"})
-    #st.title("Member Portal Bill Voting")
+    #st.set_page_config(page_title='Member Portal Bill Voting', layout='wide', theme={"base": "light"})
+    st.title("Member Portal Bill Voting")
 
     # Text input fields
     name = st.text_input("Name")
