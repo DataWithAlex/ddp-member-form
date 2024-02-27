@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import time
 
 def main():
     #st.set_page_config(page_title='Member Portal Bill Voting', layout='wide', theme={"base": "light"})
@@ -29,6 +30,14 @@ def main():
 
     # Submit button
     if st.button("Submit"):
+        # Display a spinner while processing
+        with st.spinner(text="Loading, please wait..."):
+            # Simulate processing time (replace this with actual API call)
+            time.sleep(20)
+
+        # After 10 seconds, update message to "Complete"
+        st.success("Complete")
+
         # Package the form data into a dictionary
         form_data = {
             "name": name,
@@ -40,12 +49,12 @@ def main():
             "support": support
         }
 
-        # Call the FastAPI API
-        response = call_api(form_data)
+        # Call the FastAPI API (commented out for testing)
+        #response = call_api(form_data)
 
         # Display response
-        st.write("API Response:")
-        st.json(response)
+        #st.write("API Response:")
+        #st.json(response)
 
 def call_api(data):
     # Define API endpoint
