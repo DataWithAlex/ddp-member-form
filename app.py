@@ -1,38 +1,93 @@
 import streamlit as st
 import requests
-import time
+
+def inject_css(css):
+    st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
+
+css = """
+<style>
+/* Base styles for inputs, selects, and text areas */
+.stTextInput input, .stSelectbox select, .stDateInput input, .stTextArea textarea, .stSelectbox > div > select {
+    color: #333 !important;
+    vertical-align: middle !important;
+    background-color: #fff !important;
+    border: 1px solid #ccc !important;
+    border-radius: 0 !important; /* Make input boxes square */
+    box-shadow: none !important; /* Remove shadows */
+    width: 100% !important;
+    height: 38px !important;
+    margin-bottom: 10px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    line-height: 1.42857 !important;
+    display: block !important;
+    box-sizing: border-box !important;
+}
+
+/* Specific styles for Streamlit input labels */
+.stTextInput > label, .stSelectbox > label, .stDateInput > label, .stRadio > label, .stLabel > label {
+    color: #333333 !important; /* Font color */
+    font-size: 14px !important; /* Font size */
+    font-family: Arial, sans-serif !important; /* Font family */
+    margin: 0px 0px 5px 0px !important; /* Margin around the label */
+    font-weight: bold !important; /* Bold font weight */
+    display: block !important; /* Ensure the label is displayed as a block */
+}
+
+/* Style for the dropdown arrow in the select element */
+.stSelectbox > div > div[class^="select"]::after {
+    border-color: #333 transparent transparent !important; /* Adjust the color as needed */
+}
+
+/* Style for the select element when it is focused */
+.stSelectbox select:focus {
+    outline: none !important;
+}
+
+/* Modify the submit button styling */
+button, .stButton > button {
+    background-color: #308133 !important; /* The green background */
+    border: none !important;
+    color: white !important;
+    padding: 15px 20px !important;
+    margin-top: 20px !important;
+    font-size: 14px !important;
+    line-height: 1.42857 !important;
+    display: block !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border-radius: 0 !important; /* Make the button square */
+}
+
+/* Global font style */
+* {
+    font-family: Arial, sans-serif !important; /* Use Arial font for consistency */
+}
+</style>
+"""
 
 def main():
-    #st.set_page_config(page_title='Member Portal Bill Voting', layout='wide', theme={"base": "light"})
-    st.title("Member Portal Bill Voting")
+    inject_css(css)
 
-    # Text input fields
     name = st.text_input("Name")
     email = st.text_input("Email Address")
     member_org = st.text_input("Member Organization")
 
-    # Create a horizontal layout for "Bill" dropdown and "Bill Number" text input
-    col1, col2 = st.columns([1, 1])  # Adjust column width as needed
+    # Create three columns for "Bill", "Bill Number" and "Support or Oppose"
+    col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
-        # Dropdown for bill type
         bill_type = st.selectbox("Bill", options=["HB", "SB"])
-
     with col2:
-        # Text input field for bill number
         bill_number = st.text_input("Bill Number")
+    with col3:
+        # Convert the radio buttons to a select box
+        support = st.selectbox("Support or Oppose", options=["Support", "Oppose"])
 
-    # Text input field for year
     current_year = "2024"
     selected_year = st.text_input("Year", value=current_year)
 
-    # Radio button for support or oppose
-    support = st.radio("Support or Oppose", options=["Support", "Oppose"])
-
-    # Submit button
     if st.button("Submit"):
-        # Display a spinner while processing
         with st.spinner(text="Loading, please wait..."):
-            # Package the form data into a dictionary
             form_data = {
                 "name": name,
                 "email": email,
@@ -42,46 +97,24 @@ def main():
                 "bill_number": bill_number,
                 "support": support
             }
-
-            # Call the FastAPI API
             response = call_api(form_data)
-
-        # After API call completes, update message to "Complete"
         st.success("Complete")
 
-        # Package the form data into a dictionary
-
-
-        # Call the FastAPI API (commented out for testing)
-        #response = call_api(form_data)
-
-        # Display response
-        #st.write("API Response:")
-        #st.json(response)
-
 def call_api(data):
-    # Define API endpoint
     api_url = "http://54.242.92.10:8080/update-bill/"
 
     try:
-        # Extract year and bill_number from data
         year = data.get("year")
         bill_number = data.get("bill_number")
 
-        # Check if year and bill_number are present
         if not year or not bill_number:
             return {"error": "Year and bill_number are required."}
 
-        # Construct query parameters
         params = {"year": year, "bill_number": bill_number}
-
-        # Make POST request to API with query parameters
         response = requests.post(api_url, params=params, json=data)
 
-        # Print response content for debugging
         print(response.content)
 
-        # Check if request was successful
         if response.status_code == 200:
             return response.json()
         else:
