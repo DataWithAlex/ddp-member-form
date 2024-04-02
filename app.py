@@ -73,6 +73,9 @@ def main():
     email = st.text_input("Email Address")
     member_org = st.text_input("Member Organization")
 
+    current_year = "2024"
+    selected_year = st.text_input("Year", value=current_year)
+
     # Create three columns for "Bill", "Bill Number" and "Support or Oppose"
     col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
@@ -83,10 +86,7 @@ def main():
         # Convert the radio buttons to a select box
         support = st.selectbox("Support or Oppose", options=["Support", "Oppose"])
 
-    current_year = "2024"
-    selected_year = st.text_input("Year", value=current_year)
-
-    if st.button("Submit"):
+    if st.button("SUBMIT"):
         with st.spinner(text="Loading, please wait..."):
             form_data = {
                 "name": name,
