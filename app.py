@@ -101,7 +101,7 @@ def main():
         st.success("Complete")
 
 def call_api(data):
-    api_url = "http://54.242.92.10:8080/update-bill/"
+    api_url = "http://3.226.54.104:8080/update-bill/"
 
     try:
         year = data.get("year")
