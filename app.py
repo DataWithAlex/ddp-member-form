@@ -76,15 +76,22 @@ def main():
     current_year = "2024"
     selected_year = st.text_input("Year", value=current_year)
 
-    # Create three columns for "Bill", "Bill Number" and "Support or Oppose"
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        bill_type = st.selectbox("Bill", options=["HB", "SB"])
-    with col2:
-        bill_number = st.text_input("Bill Number")
-    with col3:
-        # Convert the radio buttons to a select box
-        support = st.selectbox("Support or Oppose", options=["Support", "Oppose"])
+    # Checkbox for legislation type
+    is_federal = st.checkbox("Is this federal legislation?")
+
+    if is_federal:
+        session = st.text_input("Congress Session Number (e.g., 118)")
+        bill_number = st.text_input("Bill Number (e.g., hr8014)")
+    else:
+        # Create three columns for "Bill", "Bill Number" and "Support or Oppose"
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            bill_type = st.selectbox("Bill", options=["HB", "SB"])
+        with col2:
+            bill_number = st.text_input("Bill Number")
+        with col3:
+            # Convert the radio buttons to a select box
+            support = st.selectbox("Support or Oppose", options=["Support", "Oppose"])
 
     if st.button("SUBMIT"):
         with st.spinner(text="Loading, please wait..."):
@@ -93,24 +100,45 @@ def main():
                 "email": email,
                 "member_organization": member_org,
                 "year": selected_year,
-                "bill_type": bill_type,
-                "bill_number": bill_number,
                 "support": support
             }
-            response = call_api(form_data)
-        st.success("Complete")
+            if is_federal:
+                form_data["session"] = session
+                form_data["bill_number"] = bill_number
+            else:
+                form_data["bill_type"] = bill_type
+                form_data["bill_number"] = bill_number
 
-def call_api(data):
-    api_url = "http://3.226.54.104:8080/update-bill/"
+            response = call_api(form_data, is_federal)
+            if "error" in response:
+                st.error(response["error"])
+            else:
+                st.success("Complete")
+
+def call_api(data, is_federal):
+    if is_federal:
+        api_url = "http://3.226.54.104:8080/process-federal-bill/"
+    else:
+        api_url = "http://3.226.54.104:8080/update-bill/"
 
     try:
-        year = data.get("year")
-        bill_number = data.get("bill_number")
+        if is_federal:
+            session = data.get("session")
+            bill_number = data.get("bill_number")
 
-        if not year or not bill_number:
-            return {"error": "Year and bill_number are required."}
+            if not session or not bill_number:
+                return {"error": "Session and bill_number are required for federal legislation."}
 
-        params = {"year": year, "bill_number": bill_number}
+            params = {"session": session, "bill": bill_number}
+        else:
+            year = data.get("year")
+            bill_number = data.get("bill_number")
+
+            if not year or not bill_number:
+                return {"error": "Year and bill_number are required for state legislation."}
+
+            params = {"year": year, "bill_number": bill_number}
+
         response = requests.post(api_url, params=params, json=data)
 
         print(response.content)
