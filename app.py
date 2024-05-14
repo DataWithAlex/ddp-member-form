@@ -99,8 +99,7 @@ def main():
                 "name": name,
                 "email": email,
                 "member_organization": member_org,
-                "year": selected_year,
-                "support": support
+                "year": selected_year
             }
             if is_federal:
                 form_data["session"] = session
@@ -108,6 +107,7 @@ def main():
             else:
                 form_data["bill_type"] = bill_type
                 form_data["bill_number"] = bill_number
+                form_data["support"] = support
 
             response = call_api(form_data, is_federal)
             if "error" in response:
