@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import webbrowser
 
 def inject_css(css):
     st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
@@ -63,35 +64,73 @@ button, .stButton > button {
 * {
     font-family: Arial, sans-serif !important; /* Use Arial font for consistency */
 }
+
+/* Custom styles for support and oppose dropdown */
+.support-select select {
+    background-color: #d4edda !important; /* Light green background */
+    color: #155724 !important; /* Dark green text */
+}
+
+.oppose-select select {
+    background-color: #f8d7da !important; /* Light red background */
+    color: #721c24 !important; /* Dark red text */
+}
 </style>
 """
 
 def main():
     inject_css(css)
 
-    name = st.text_input("Name")
-    email = st.text_input("Email Address")
-    member_org = st.text_input("Member Organization")
+    # Columns for Name and Email
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        name = st.text_input("Name")
+    with col2:
+        email = st.text_input("Email Address")
 
-    current_year = "2024"
-    selected_year = st.text_input("Year", value=current_year)
+    # Columns for Member Organization and Year
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        member_org = st.text_input("Member Organization")
+    with col2:
+        current_year = "2024"
+        years = [str(year) for year in range(2024, 2017, -1)]
+        selected_year = st.selectbox("Year", options=years, index=0)
 
-    # Checkbox for legislation type
-    is_federal = st.checkbox("Is this federal legislation?")
+    # Columns for Type and Link button
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        legislation_type = st.selectbox("Type", options=["Florida Bills", "Federal Bills"])
+    with col2:
+        if legislation_type == "Federal Bills":
+            if st.button("Federal Bills Website"):
+                webbrowser.open_new_tab("https://www.congress.gov/search?q=%7B%22source%22%3A%22legislation%22%7D")
+        else:
+            if st.button("Florida Bills Website"):
+                webbrowser.open_new_tab("https://www.flsenate.gov/Session/Bills/2024")
 
-    if is_federal:
-        session = st.text_input("Congress Session Number (e.g., 118)")
-        bill_number = st.text_input("Bill Number (e.g., hr8014)")
-    else:
-        # Create three columns for "Bill", "Bill Number" and "Support or Oppose"
+    if legislation_type == "Federal Bills":
         col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            sessions = [str(i) for i in range(118, 99, -1)]
+            session = st.selectbox("Congress Session Number", options=sessions, index=0)
+        with col2:
+            bill_number = st.text_input("Bill Number")
+        with col3:
+            federal_bill_type = st.selectbox("Bill", options=["HR", "S", "H.Amdt", "S.Amdt", "H.Res", "S.Res", "H.J.Res", "S.J.Res", "H.Con.Res", "S.Con.Res", "Historic Doc"])
+    else:
+        col1, col2 = st.columns([1, 1])
         with col1:
             bill_type = st.selectbox("Bill", options=["HB", "SB"])
         with col2:
             bill_number = st.text_input("Bill Number")
-        with col3:
-            # Convert the radio buttons to a select box
-            support = st.selectbox("Support or Oppose", options=["Support", "Oppose"])
+
+    # Support or Oppose section
+    support = st.selectbox("Support or Oppose", options=["Support", "Oppose"], key="support_oppose")
+
+    # Apply custom class based on selection
+    support_class = "support-select" if support == "Support" else "oppose-select"
+    inject_css(f".stSelectbox select {{ background-color: {'#d4edda' if support == 'Support' else '#f8d7da'} !important; color: {'#155724' if support == 'Support' else '#721c24'} !important; }}")
 
     if st.button("SUBMIT"):
         with st.spinner(text="Loading, please wait..."):
@@ -101,28 +140,30 @@ def main():
                 "member_organization": member_org,
                 "year": selected_year
             }
-            if is_federal:
+            if legislation_type == "Federal Bills":
                 form_data["session"] = session
                 form_data["bill_number"] = bill_number
+                form_data["bill_type"] = federal_bill_type
+                form_data["support"] = support
             else:
                 form_data["bill_type"] = bill_type
                 form_data["bill_number"] = bill_number
                 form_data["support"] = support
 
-            response = call_api(form_data, is_federal)
+            response = call_api(form_data, legislation_type)
             if "error" in response:
                 st.error(response["error"])
             else:
                 st.success("Complete")
 
-def call_api(data, is_federal):
-    if is_federal:
+def call_api(data, legislation_type):
+    if legislation_type == "Federal Bills":
         api_url = "http://3.226.54.104:8080/process-federal-bill/"
     else:
         api_url = "http://3.226.54.104:8080/update-bill/"
 
     try:
-        if is_federal:
+        if legislation_type == "Federal Bills":
             session = data.get("session")
             bill_number = data.get("bill_number")
 
