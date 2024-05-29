@@ -91,7 +91,7 @@ def main():
     # Columns for Member Organization and Year
     col1, col2 = st.columns([1, 1])
     with col1:
-        member_org = st.text_input("Member Organization")
+        member_org = st.text_input("Member Organization (If None Leave Blank)")
     with col2:
         current_year = "2024"
         years = [str(year) for year in range(2024, 2017, -1)]
@@ -138,17 +138,13 @@ def main():
                 "name": name,
                 "email": email,
                 "member_organization": member_org,
-                "year": selected_year
+                "year": selected_year,
+                "legislation_type": legislation_type,
+                "session": session if legislation_type == "Federal Bills" else "N/A",
+                "bill_number": bill_number,
+                "bill_type": federal_bill_type if legislation_type == "Federal Bills" else bill_type,
+                "support": support
             }
-            if legislation_type == "Federal Bills":
-                form_data["session"] = session
-                form_data["bill_number"] = bill_number
-                form_data["bill_type"] = federal_bill_type
-                form_data["support"] = support
-            else:
-                form_data["bill_type"] = bill_type
-                form_data["bill_number"] = bill_number
-                form_data["support"] = support
 
             response = call_api(form_data, legislation_type)
             if "error" in response:
@@ -163,25 +159,7 @@ def call_api(data, legislation_type):
         api_url = "http://3.226.54.104:8080/update-bill/"
 
     try:
-        if legislation_type == "Federal Bills":
-            session = data.get("session")
-            bill_number = data.get("bill_number")
-
-            if not session or not bill_number:
-                return {"error": "Session and bill_number are required for federal legislation."}
-
-            params = {"session": session, "bill": bill_number}
-        else:
-            year = data.get("year")
-            bill_number = data.get("bill_number")
-
-            if not year or not bill_number:
-                return {"error": "Year and bill_number are required for state legislation."}
-
-            params = {"year": year, "bill_number": bill_number}
-
-        response = requests.post(api_url, params=params, json=data)
-
+        response = requests.post(api_url, json=data)
         print(response.content)
 
         if response.status_code == 200:
