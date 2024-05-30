@@ -133,7 +133,7 @@ def main():
     inject_css(f".stSelectbox select {{ background-color: {'#d4edda' if support == 'Support' else '#f8d7da'} !important; color: {'#155724' if support == 'Support' else '#721c24'} !important; }}")
 
     if st.button("SUBMIT"):
-        with st.spinner(text="Loading, please wait..."):
+        with st.spinner(text="Loading, please wait... This process may take a few minutes, so do not click Submit again"):
             form_data = {
                 "name": name,
                 "email": email,
@@ -151,6 +151,8 @@ def main():
                 st.error(response["error"])
             else:
                 st.success("Complete")
+                if "url" in response:
+                    st.markdown(f"### [View the bill details here]({response['url']})")
 
 def call_api(data, legislation_type):
     if legislation_type == "Federal Bills":
