@@ -117,7 +117,7 @@ def main():
         with col2:
             bill_number = st.text_input("Bill Number")
         with col3:
-            federal_bill_type = st.selectbox("Bill", options=["HR", "S", "H.Amdt", "S.Amdt", "H.Res", "S.Res", "H.J.Res", "S.J.Res", "H.Con.Res", "S.Con.Res", "Historic Doc"])
+            federal_bill_type = st.selectbox("Bill", options=["HR", "S", "H.Res", "S.Res", "H.J.Res", "S.J.Res", "H.Con.Res", "S.Con.Res"])
     else:
         col1, col2 = st.columns([1, 1])
         with col1:
