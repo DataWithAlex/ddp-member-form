@@ -128,6 +128,9 @@ def main():
     # Support or Oppose section
     support = st.selectbox("Support or Oppose", options=["Support", "Oppose"], key="support_oppose")
 
+    # Add a language selection dropdown
+    language = st.selectbox("Language", options=["en", "es"], index=0)
+
     # Apply custom class based on selection
     support_class = "support-select" if support == "Support" else "oppose-select"
     inject_css(f".stSelectbox select {{ background-color: {'#d4edda' if support == 'Support' else '#f8d7da'} !important; color: {'#155724' if support == 'Support' else '#721c24'} !important; }}")
@@ -143,7 +146,8 @@ def main():
                 "session": session if legislation_type == "Federal Bills" else "N/A",
                 "bill_number": bill_number,
                 "bill_type": federal_bill_type if legislation_type == "Federal Bills" else bill_type,
-                "support": support
+                "support": support,
+                "lan": language  # Add this line to include the language in the form data
             }
 
             response = call_api(form_data, legislation_type)
