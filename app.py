@@ -117,16 +117,16 @@ def main():
         with col2:
             bill_number = st.text_input("Bill Number")
         with col3:
-            federal_bill_type = st.selectbox("Bill", options=["HR", "S", "H.Res", "S.Res", "H.J.Res", "S.J.Res", "H.Con.Res", "S.Con.Res"])
+            federal_bill_type = st.selectbox("Bill Prefix", options=["HR", "S", "H.Res", "S.Res", "H.J.Res", "S.J.Res", "H.Con.Res", "S.Con.Res"])
     else:
         col1, col2 = st.columns([1, 1])
         with col1:
-            bill_type = st.selectbox("Bill", options=["HB", "SB"])
+            bill_type = st.selectbox("Bill Prefix", options=["HB", "SB"])
         with col2:
             bill_number = st.text_input("Bill Number")
 
     # Support or Oppose section
-    support = st.selectbox("Support or Oppose", options=["Support", "Oppose"], key="support_oppose")
+    support = st.selectbox("Organization’s Position", options=["Support", "Oppose"], key="support_oppose")
 
     # Add a language selection dropdown
     language = st.selectbox("Language", options=["en", "es"], index=0)
