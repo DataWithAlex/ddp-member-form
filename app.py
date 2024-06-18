@@ -101,16 +101,16 @@ def main():
     with col1:
         legislation_type = st.selectbox("Type", options=["Florida Bills", "Federal Bills"])
     with col2:
+        link = None
         if legislation_type == "Federal Bills":
             if st.button("Federal Bills Website"):
-                js = "window.open('https://www.congress.gov/search?q=%7B%22source%22%3A%22legislation%22%7D')"
-                html = f'<iframe srcdoc="{js}"></iframe>'
-                st.components.v1.html(html, height=0, width=0)
+                link = "https://www.congress.gov/search?q=%7B%22source%22%3A%22legislation%22%7D"
         else:
             if st.button("Florida Bills Website"):
-                js = "window.open('https://www.flsenate.gov/Session/Bills/2024')"
-                html = f'<iframe srcdoc="{js}"></iframe>'
-                st.components.v1.html(html, height=0, width=0)
+                link = "https://www.flsenate.gov/Session/Bills/2024"
+
+        if link:
+            st.markdown(f'[Click here to visit the website]({link})')
 
     if legislation_type == "Federal Bills":
         col1, col2, col3 = st.columns([1, 1, 1])
