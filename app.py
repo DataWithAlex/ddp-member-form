@@ -104,10 +104,14 @@ def main():
     with col2:
         if legislation_type == "Federal Bills":
             if st.button("Federal Bills Website"):
-                webbrowser.open_new_tab("https://www.congress.gov/search?q=%7B%22source%22%3A%22legislation%22%7D")
+                js = "window.open('https://www.congress.gov/search?q=%7B%22source%22%3A%22legislation%22%7D')"
+                html = f'<script>{js}</script>'
+                st.markdown(html, unsafe_allow_html=True)
         else:
             if st.button("Florida Bills Website"):
-                webbrowser.open_new_tab("https://www.flsenate.gov/Session/Bills/2024")
+                js = "window.open('https://www.flsenate.gov/Session/Bills/2024')"
+                html = f'<script>{js}</script>'
+                st.markdown(html, unsafe_allow_html=True)
 
     if legislation_type == "Federal Bills":
         col1, col2, col3 = st.columns([1, 1, 1])
