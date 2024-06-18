@@ -126,10 +126,7 @@ def main():
             bill_number = st.text_input("Bill Number")
 
     # Support or Oppose section
-    support = st.selectbox("Organization’s Position", options=["Support", "Oppose"], key="support_oppose")
-
-    # Add a language selection dropdown
-    language = st.selectbox("Language", options=["en", "es"], index=0)
+    support = st.selectbox("Organization’s Position", options=["N/A", "Support", "Oppose"], key="support_oppose", index=0)
 
     # Apply custom class based on selection
     support_class = "support-select" if support == "Support" else "oppose-select"
@@ -147,7 +144,7 @@ def main():
                 "bill_number": bill_number,
                 "bill_type": federal_bill_type if legislation_type == "Federal Bills" else bill_type,
                 "support": support,
-                "lan": language  # Add this line to include the language in the form data
+                "lan": "en"  # Default language to "en"
             }
 
             response = call_api(form_data, legislation_type)
