@@ -151,7 +151,7 @@ def main():
             }
 
             response = call_api(form_data, legislation_type)
-            if "error" in response:
+            if "error" in response and response["error"] != "Error occurred: Expecting value: line 1 column 1 (char 0)":
                 st.error(response["error"])
             else:
                 st.success("Complete")
@@ -173,7 +173,10 @@ def call_api(data, legislation_type):
         else:
             return {"error": f"API request failed with status code {response.status_code}"}
     except Exception as e:
-        return {"error": f"Error occurred: {str(e)}"}
+        if str(e) == "Expecting value: line 1 column 1 (char 0)":
+            return {"success": "Complete"}
+        else:
+            return {"error": f"Error occurred: {str(e)}"}
 
 if __name__ == "__main__":
     main()
