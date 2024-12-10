@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import time
 
 def inject_css(css):
     st.markdown(f'<style>{css}</style>', unsafe_allow_html=True)
@@ -12,8 +13,8 @@ css = """
     vertical-align: middle !important;
     background-color: #fff !important;
     border: 1px solid #ccc !important;
-    border-radius: 0 !important; /* Make input boxes square */
-    box-shadow: none !important; /* Remove shadows */
+    border-radius: 0 !important;
+    box-shadow: none !important;
     width: 100% !important;
     height: 38px !important;
     margin-bottom: 10px !important;
@@ -26,17 +27,17 @@ css = """
 
 /* Specific styles for Streamlit input labels */
 .stTextInput > label, .stSelectbox > label, .stDateInput > label, .stRadio > label, .stLabel > label {
-    color: #333333 !important; /* Font color */
-    font-size: 14px !important; /* Font size */
-    font-family: Arial, sans-serif !important; /* Font family */
-    margin: 0px 0px 5px 0px !important; /* Margin around the label */
-    font-weight: bold !important; /* Bold font weight */
-    display: block !important; /* Ensure the label is displayed as a block */
+    color: #333333 !important;
+    font-size: 14px !important;
+    font-family: Arial, sans-serif !important;
+    margin: 0px 0px 5px 0px !important;
+    font-weight: bold !important;
+    display: block !important;
 }
 
 /* Style for the dropdown arrow in the select element */
 .stSelectbox > div > div[class^="select"]::after {
-    border-color: #333 transparent transparent !important; /* Adjust the color as needed */
+    border-color: #333 transparent transparent !important;
 }
 
 /* Style for the select element when it is focused */
@@ -46,7 +47,7 @@ css = """
 
 /* Modify the submit button styling */
 button, .stButton > button {
-    background-color: #308133 !important; /* The green background */
+    background-color: #308133 !important;
     border: none !important;
     color: white !important;
     padding: 15px 20px !important;
@@ -56,29 +57,88 @@ button, .stButton > button {
     display: block !important;
     width: 100% !important;
     box-sizing: border-box !important;
-    border-radius: 0 !important; /* Make the button square */
+    border-radius: 0 !important;
 }
 
 /* Global font style */
 * {
-    font-family: Arial, sans-serif !important; /* Use Arial font for consistency */
+    font-family: Arial, sans-serif !important;
 }
 
 /* Custom styles for support and oppose dropdown */
 .support-select select {
-    background-color: #d4edda !important; /* Light green background */
-    color: #155724 !important; /* Dark green text */
+    background-color: #d4edda !important;
+    color: #155724 !important;
 }
 
 .oppose-select select {
-    background-color: #f8d7da !important; /* Light red background */
-    color: #721c24 !important; /* Dark red text */
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+/* Status message styles */
+.status-message {
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.status-processing {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-failed {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }
 </style>
 """
 
+def check_status(base_url, submission_id):
+    """Check the status of a submitted request."""
+    try:
+        response = requests.get(f"{base_url}/bill-status/{submission_id}")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except Exception as e:
+        st.error(f"Error checking status: {str(e)}")
+        return None
+
+def display_status_message(status_data):
+    """Display a formatted status message based on the status response."""
+    if not status_data:
+        return
+
+    status = status_data.get('status', '').lower()
+    message = status_data.get('message', 'Processing request...')
+    
+    if status == 'processing':
+        st.markdown(f'<div class="status-message status-processing">{message}</div>', unsafe_allow_html=True)
+    elif status == 'completed':
+        st.markdown(f'<div class="status-message status-completed">{message}</div>', unsafe_allow_html=True)
+    elif status == 'failed':
+        st.markdown(f'<div class="status-message status-failed">{message}</div>', unsafe_allow_html=True)
+    else:
+        st.info(message)
+
 def main():
     inject_css(css)
+
+    # Initialize session state for tracking submissions
+    if 'submission_id' not in st.session_state:
+        st.session_state.submission_id = None
+    if 'processing' not in st.session_state:
+        st.session_state.processing = False
 
     # Columns for Name and Email
     col1, col2 = st.columns([1, 1])
@@ -92,7 +152,6 @@ def main():
     with col1:
         member_org = st.text_input("Member Organization (If None Leave Blank)")
     with col2:
-        current_year = "2024"
         years = [str(year) for year in range(2025, 2017, -1)]
         selected_year = st.selectbox("Year", options=years, index=0)
 
@@ -129,14 +188,14 @@ def main():
             bill_number = st.text_input("Bill Number")
 
     # Support or Oppose section
-    support = st.selectbox("Organization’s Position", options=["N/A", "Support", "Oppose"], key="support_oppose", index=0)
+    support = st.selectbox("Organization's Position", options=["N/A", "Support", "Oppose"], key="support_oppose", index=0)
 
     # Apply custom class based on selection
     support_class = "support-select" if support == "Support" else "oppose-select"
     inject_css(f".stSelectbox select {{ background-color: {'#d4edda' if support == 'Support' else '#f8d7da'} !important; color: {'#155724' if support == 'Support' else '#721c24'} !important; }}")
 
     if st.button("SUBMIT"):
-        with st.spinner(text="Loading, please wait... This process may take a few minutes, so do not click Submit again"):
+        with st.spinner("Submitting request..."):
             form_data = {
                 "name": name,
                 "email": email,
@@ -147,36 +206,50 @@ def main():
                 "bill_number": bill_number,
                 "bill_type": federal_bill_type if legislation_type == "Federal Bills" else bill_type,
                 "support": support,
-                "lan": "en"  # Default language to "en"
+                "lan": "en"
             }
 
-            response = call_api(form_data, legislation_type)
-            if "error" in response and response["error"] != "Error occurred: Expecting value: line 1 column 1 (char 0)":
-                st.error(response["error"])
-            else:
-                st.success("Complete")
-                if "url" in response:
-                    st.markdown(f"### [View the bill details here]({response['url']})")
+            base_url = "http://3.226.54.104:8080"
+            api_url = f"{base_url}/process-federal-bill/" if legislation_type == "Federal Bills" else f"{base_url}/update-bill/"
 
-def call_api(data, legislation_type):
-    if legislation_type == "Federal Bills":
-        api_url = "http://3.226.54.104:8080/process-federal-bill/"
-    else:
-        api_url = "http://3.226.54.104:8080/update-bill/"
+            try:
+                response = requests.post(api_url, json=form_data)
+                if response.status_code == 202:  # Accepted
+                    response_data = response.json()
+                    st.session_state.submission_id = response_data.get('submission_id')
+                    st.session_state.processing = True
+                    
+                    # Display initial status message
+                    st.info(response_data.get('message'))
+                    st.info(response_data.get('note', ''))
+                    
+                    # Create a placeholder for status updates
+                    status_placeholder = st.empty()
+                    
+                    # Poll for status updates
+                    while st.session_state.processing:
+                        status_data = check_status(base_url, st.session_state.submission_id)
+                        if status_data:
+                            with status_placeholder:
+                                display_status_message(status_data)
+                            
+                            if status_data.get('status').lower() in ['completed', 'failed']:
+                                st.session_state.processing = False
+                                break
+                        
+                        time.sleep(5)  # Wait 5 seconds before checking again
+                        
+                else:
+                    st.error(f"Request failed with status code: {response.status_code}")
+                    
+            except Exception as e:
+                st.error(f"Error occurred: {str(e)}")
 
-    try:
-        response = requests.post(api_url, json=data)
-        print(response.content)
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            return {"error": f"API request failed with status code {response.status_code}"}
-    except Exception as e:
-        if str(e) == "Expecting value: line 1 column 1 (char 0)":
-            return {"success": "Complete"}
-        else:
-            return {"error": f"Error occurred: {str(e)}"}
+    # Display current status if there's an ongoing process
+    if st.session_state.submission_id and st.session_state.processing:
+        status_data = check_status(base_url, st.session_state.submission_id)
+        if status_data:
+            display_status_message(status_data)
 
 if __name__ == "__main__":
-    main()
+    main() 
